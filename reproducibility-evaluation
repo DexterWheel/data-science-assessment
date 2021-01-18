@@ -1,5 +1,16 @@
 #######Notes#######
 
+
+A lot of the transformations needed to do certain tests would eliminate useful data if all kdone at one. E.g data that needs to be removed for section one may not need to be removed for other sections. By applying the transformations in a a pipe or specifying within the function to exclude data will result in less need for making new dataframes.
+
+Data import: 
+
+"Protein Localisations (ORFeome)" row 3 is the entirety of the localisation data 
+
+I need to use something like grep to isolate the columns with the localisation data
+
+
+
 Data analysis:
 
   Main aim: is to eliminate most of the new dataframes that I create
@@ -27,4 +38,10 @@ Data analysis:
   Section 3: The Relationship Between mRNA Stability and Localisation in Essential and Non-Essential mRNAs
   
   
-    T--Lines 84-113: Localisation data needs to be made into a single variable with new names (wrkshp 2mutate function), could be done with one pipe and without the creation of new dataframes
+    T--Lines 84-113: Localisation data needs to be made into a single variable with new names (wrkshp 2 mutate function), could be done with one pipe and without the creation of new dataframes, I would also like to find an elegant way to display the number of observations in each localisation
+    
+    T--Lines 115-122: The removal of n.a values can be included in a pipe so that you do not need to make a new dataframe for the summary function
+    
+    summary <- locale %>% subset(!is.na(mRNA.stabilities)) %>% summarySE(measurevar = "mRNA.stabilities", groupvars = c("localisation", "essential"))
+    
+    Lines 

@@ -10,10 +10,11 @@ setwd("~/Biology/R/Biology/Big Data Biology/Data")
 #First I load in the two data sets required for my analysis
 
 load(url("https://www-users.york.ac.uk/~dj757/BIO00047I/data/yeast_data.28-02-2020.Rda"))
-angeli <- read.delim("AnGeLiDatabase.txt",h=T)
+angeli <- read.delim("data-old/AnGeLiDatabase.txt",h=T)
 
 #I then check to see if the data has been imported correctly
-ls()
+
+ls() 
 class(gene)
 nrow(gene)
 ncol(gene)
