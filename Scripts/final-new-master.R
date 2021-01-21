@@ -5,79 +5,66 @@
 #                                                                                     #
 #######################################################################################
 
-setwd("~/Biology/R/Biology/Big Data Biology/Data")
+library(dplyr)
 
-#First I load in the two data sets required for my analysis
-
+#Old dataset from workshop
 load(url("https://www-users.york.ac.uk/~dj757/BIO00047I/data/yeast_data.28-02-2020.Rda"))
-angeli <- read.delim("data-old/AnGeLiDatabase.txt",h=T)
 
-#I then check to see if the data has been imported correctly
-ls()
 class(gene)
 nrow(gene)
 ncol(gene)
 head(gene)
 
+#data from database
+angeli <- read.delim("data-old/AnGeLiDatabase.txt",h=T)
+
+ls()
 class(angeli)
 nrow(angeli)
 ncol(angeli)
 head(angeli)
 
-#Here I insert localisation data from the angeli database into the gene dataframe
+#selecting the localisation data based on the data in row 3. 
+#Group refers to first column which allows datasets to be merged
 
-#First I remove gene ontology columns
-#I get a the vector of the column names
-nam <- names(angeli)
+cols <- c("Group","Protein Localisations (ORFeome)")
 
-#Using grep I can locate gene ontology or "GO." columns
-#I invert the grep, so it does not locate these columns
-not.go.columns <- grep("GO.",nam,invert=T)
+angeli2 <- angeli %>%
+  select(grep("FYPO|PF|GO.",colnames(angeli),invert=T)) %>%
+  t() %>%
+  data.frame() %>%
+  filter(X3 %in% cols ) %>%
+  t() %>%
+  data.frame()
 
-#using this I create a subset of angeli without GO columns 
+#removing info columns  
+angeli2 <-angeli2[8:7012,]
 
-angeli2 <- angeli[,not.go.columns]
+#changing the first column to the same name as in the gene dataset
+names(angeli2)[1]="gene"
 
-#I also need to remove 'FYPO', (fission yeast phenotype ontology) or PFAM groups
-#so I remove them with grep also
-not.fypo.or.pfam.columns <- grep("FYPO|PF",names(angeli2),invert=T)
-
-angeli3 <- angeli2[,not.fypo.or.pfam.columns]
-
-loc.columns <- grep("Protein Localisations (ORFeome)",names(angeli3))
-
-apropos("(ORFeome)") 
-
-#I create a subset with just the information rows so I can locate the data I need
-info <- angeli3[1:7,]
+info <- angeli[1:7,]
 View(info)
-#I also create a subset with only the rows with data
-gene.data <- angeli3[8:7012,]
 
-#renaming first column
-names(gene.data)[1]="gene"
+#next I need add the other columns to this dataframe
 
-#I create subset of the data containing just the two columns I need
-my.data.col <- which(names(gene.data) == "Cytosol")
-my.data.col2 <- which(names(gene.data) == "ER")
-angeli4 <- gene.data[,c(1,my.data.col, my.data.col2)]
-View(angeli4)
+#I use the colnames function to identify the column number of the desired columns
+colnames(gene)
+gene<- gene[,c(1,4,7,8,9,11,22,25)]
 
-#I combine angeli4 with the gene dataframes, and save it as an Rda file to save 
-#time when reopening the script
-gene_final<-merge(gene,angeli4,by="gene",all=T)
-save(gene_final,file="gene_finaldata.Rda")
+#combining the two datasets
+gene_f<-merge(gene,angeli2,by="gene",all=T)
+save(gene_f,file="gene_f.Rda")
 
-#Finally I check that the dataframe has been generated correctly
-class(gene_final) #data.frame
-nrow(gene_final)#how many rows?
+class(gene_f) #data.frame
+nrow(gene_f)#how many rows?
 #7009
-ncol(gene_final)#columns?
-#25
-head(gene_final)#first few rows
+ncol(gene_f)#columns?
+#47
+head(gene_f)#first few rows
 
 #I can use this file for future use without having to import the whole database again
-load(file="gene_finaldata.Rda")
+load(file="gene_f.Rda")
 
 #######################################################################################
 #                                                                                     #

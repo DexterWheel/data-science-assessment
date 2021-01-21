@@ -1,0 +1,7 @@
+#[row index] "column name"...
+nam <- names(angeli)
+#
+not.go.columns
+# [row index] column number...
+
+not.go.columns <- grep("GO.",nam,invert=T)
