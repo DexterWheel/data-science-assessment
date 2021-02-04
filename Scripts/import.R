@@ -3,15 +3,15 @@ library(dplyr)
 #Old dataset from workshop
 load(url("https://www-users.york.ac.uk/~dj757/BIO00047I/data/yeast_data.28-02-2020.Rda"))
 
+#data from database
+angeli <- read.delim("data-old/AnGeLiDatabase.txt",h=T)
+
+ls()
 class(gene)
 nrow(gene)
 ncol(gene)
 head(gene)
 
-#data from database
-angeli <- read.delim("data-old/AnGeLiDatabase.txt",h=T)
-
-ls()
 class(angeli)
 nrow(angeli)
 ncol(angeli)
@@ -31,39 +31,30 @@ angeli2 <- angeli %>%
   data.frame()
 
 #removing info columns  
-angeli2 <-angeli2[8:7012,]
+angeli2 <- angeli2[8:7012,]
 
 #changing the first column to the same name as in the gene dataset
-names(angeli2)[1]="gene"
-
-info <- angeli[1:7,]
-View(info)
+names(angeli2)[1] = "gene"
 
 #next I need add the other columns to this dataframe
 
 #I use the colnames function to identify the column number of the desired columns
 colnames(gene)
-gene<- gene[,c(1,4,7,8,9,11,22,25)]
+gene <- gene[,c(1, 4, 7, 8, 9, 11, 22, 25)]
 
 #combining the two datasets
-gene_f<-merge(gene,angeli2,by="gene",all=T)
-save(gene_f,file="gene_f.Rda")
+gene_f <- merge(gene,angeli2, by = "gene", all = T)
+save(gene_f, file = "data-processed/gene_f.Rda")
 
-class(gene_f) #data.frame
+class(gene_f)
+#should be data.frame
 nrow(gene_f)#how many rows?
-#7009
+#should be 7009
 ncol(gene_f)#columns?
-#47
-head(gene_f)#first few rows
+#should be 47
+head(gene_f)
 
 #I can use this file for future use without having to import the whole database again
-load(file="gene_f.Rda")
-
-
-
-
-
-
-
+load(file = "data-processed/gene_f.Rda")
 
 

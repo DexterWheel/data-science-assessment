@@ -1,9 +1,6 @@
- 
-#######################################################################################
-#                                                                                     #
-#                               IMPORTING THE DATA                                    #  
-#                                                                                     #
-#######################################################################################
+######
+#Section 1: Are Essential Genes Expressed Differently to Non-Essential Genes?
+######
 
 library(ggplot2)
 library(dplyr)
@@ -15,74 +12,6 @@ library(patchwork)
 library(presetplots)
 library(Rmisc)
 library(car)
-
-#Old dataset from workshop
-load(url("https://www-users.york.ac.uk/~dj757/BIO00047I/data/yeast_data.28-02-2020.Rda"))
-
-#data from database
-angeli <- read.delim("data-raw/AnGeLiDatabase.txt",h=T)
-
-ls()
-class(gene)
-nrow(gene)
-ncol(gene)
-head(gene)
-
-class(angeli)
-nrow(angeli)
-ncol(angeli)
-head(angeli)
-
-#selecting the localisation data based on the data in row 3. 
-#Group refers to first column which allows datasets to be merged
-
-cols <- c("Group","Protein Localisations (ORFeome)")
-
-angeli2 <- angeli %>%
-  select(grep("FYPO|PF|GO.",colnames(angeli),invert=T)) %>%
-  t() %>%
-  data.frame() %>%
-  filter(X3 %in% cols ) %>%
-  t() %>%
-  data.frame()
-
-#removing info columns  
-angeli2 <- angeli2[8:7012,]
-
-#changing the first column to the same name as in the gene dataset
-names(angeli2)[1] = "gene"
-
-#next I need add the other columns to this dataframe
-
-#I use the colnames function to identify the column number of the desired columns
-colnames(gene)
-gene <- gene[,c(1, 4, 7, 8, 9, 11, 22, 25)]
-
-#combining the two datasets
-gene_f <- merge(gene,angeli2, by = "gene", all = T)
-save(gene_f, file = "data-processed/gene_f.Rda")
-
-class(gene_f)
-#should be data.frame
-nrow(gene_f)#how many rows?
-#should be 7009
-ncol(gene_f)#columns?
-#should be 47
-head(gene_f)
-
-#I can use this file for future use without having to import the whole database again
-load(file = "data-processed/gene_f.Rda")
-
-
-#######################################################################################
-#                                                                                     #
-#                                 DATA ANALYSIS                                       #  
-#                                                                                     #
-#######################################################################################
-
-######
-#Section 1: Are Essential Genes Expressed Differently to Non-Essential Genes?
-######
 
 load(file = "data-processed/gene_f.Rda")
 
@@ -132,18 +61,15 @@ wilcox.test(ess$gene.expression.RPKM, non.ess$gene.expression.RPKM)
 
 #Plotting the relationship between mRNA stability and RPKM
 plot_sctr(prot,
-          log10(prot$mRNA.stabilities),
-          log10(prot$gene.expression.RPKM),
-          "Boxplot",
-          "gene.expression.RPKM",
-          "mRNA.stabilities")
+         log10(prot$mRNA.stabilities),
+         log10(prot$gene.expression.RPKM),
+         "Boxplot",
+         "Essentiality",
+         "mRNA.stabilities")
 
-#logs of both datasets were taken to visualise the trend easier
-#I use another wilcoxon signed rank test to determine significance
-wilcox.test(prot$mRNA.stabilities, prot$gene.expression.RPKM)
-#More stable mRNAs tend to be more highly expressed
+#logs of both datasets were taken to visualise the trend easier 
 
-#making a subset removing missing essentiality and mrna stability data
+#making a subset removing missing essentialityy and mrna stability data
 prot2 <- gene_f %>%
   subset(protein_coding ==1) %>%
   subset(!is.na(essential)) %>%
@@ -159,6 +85,12 @@ plots(plot_choice,
       "mRNA.stabilities",
       c("non-Essential","Esssential") )
 
+#I use another wilcoxon signed rank test to determine significance
+wilcox.test(prot2$mRNA.stabilities, prot2$gene.expression.RPKM)
+#Null hypothesis rejected (W = 7856176, p-value < 2.2e-16)
+#More stable mRNAs tend to be more highly expressed
+
+
 #Third wilcoxon signed rank test to determine significance
 wilcox.test(ess$mRNA.stabilities, non.ess$mRNA.stabilities)
 #Null hypothesis rejected (W = 2372773, p-value = 3.728e-08)
@@ -171,8 +103,8 @@ wilcox.test(ess$mRNA.stabilities, non.ess$mRNA.stabilities)
 nams<- names(gene_f[,1:8])
 
 locale <- gene_f %>% subset(!is.na(mRNA.stabilities)) %>% subset(!is.na(essential)) %>% pivot_longer(names_to = "localisation",
-                                                                                                     values_to = "present",
-                                                                                                     cols = -nams  ) %>% subset(present == 1)
+                                                                       values_to = "present",
+                                                                       cols = -nams  ) %>% subset(present == 1)
 
 #I create summary data for the plot
 summary <- summarySE(locale, measurevar = "mRNA.stabilities", groupvars = c("localisation", "essential"))
@@ -214,7 +146,6 @@ nams2<- names(gene_f[,9:47])
 
 nams2
 
-nams2<- names(gene_f[,9:47])
 nams2[1]="Amb"
 nams2[2]="cdc"
 nams2[3]="cdcts"
@@ -234,39 +165,15 @@ nams2[16]="n.a.s"
 nams2[17]="n.d"
 nams2[18]="ndot"
 nams2[19]="nen"
-nams2[20]="no
-GT
-c"
-nams2[21]="no
-GT
-GT
-n"
-nams2[22]="no
-GT
-n
-GT
-c"
-nams2[23]="no
-GT
-n
-GT
-GT
-c"
-nams2[24]="n
-GT
-n"
-nams2[25]="no
-GT
-n
-QQ
-c"
+nams2[20]="noGTc"
+nams2[21]="noGTGTn"
+nams2[22]="noGTnGTc"
+nams2[23]="noGTnGTGTc"
+nams2[24]="nGTn"
+nams2[25]="noGTnQQc"
 nams2[26]="nol"
-nams2[27]="n
-GT
-c"
-nams2[28]="n
-GTQQ
-c"
+nams2[27]="nGTc"
+nams2[28]="nGTQQc"
 nams2[29]="nuc"
 nams2[30]="o.n.d"
 nams2[31]="pcts"
