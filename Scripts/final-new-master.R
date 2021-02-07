@@ -52,9 +52,9 @@ angeli2 <- angeli2[8:7012,]
 #changing the first column to the same name as in the gene dataset
 names(angeli2)[1] = "gene"
 
-#next I need add the other columns to this dataframe
+#add the other columns to this dataframe
 
-#I use the colnames function to identify the column number of the desired columns
+#use the colnames function to identify the column number of the desired columns
 colnames(gene)
 gene <- gene[,c(1, 4, 7, 8, 9, 11, 22, 25)]
 
@@ -80,9 +80,8 @@ load(file = "data-processed/gene_f.Rda")
 #                                                                                     #
 #######################################################################################
 
-######
-#Section 1: Are Essential Genes Expressed Differently to Non-Essential Genes?
-######
+
+#####Section 1: Are Essential Genes Expressed Differently to Non-Essential Genes?####
 
 load(file = "data-processed/gene_f.Rda")
 
@@ -90,24 +89,16 @@ nrow(gene_f)
 class(gene_f$essential)
 class(gene_f$gene.expression.RPKM)
 
-
-#only protein coding genes
+#only protein coding genes, removing missing values
 prot <- gene_f %>%
   subset(protein_coding ==1) %>%
   subset(!is.na(essential)) %>%
   subset(!is.na(gene.expression.RPKM))
 
-#around 80000 rows removed
-nrow(prot) 
+nrow(prot)
+#around 2000 rows removed
 
-#need to remove background on all of these
-#need to change fonts and positions
-#need to change 1 and 0 to essential and non-essential
-#need to make functions with presets for all three boxplot types
-#combine all the plots into one, could potentially make the function apply all three at once. High level... you could even code a choice for which of the three boxplot types you want to use
-
-#I use a wilcoxon signed rank test to determine significance
-
+#vector for choosing the plot output, see plots.R in presetplots package provided
 plot_choice <- c("box", "jit", "vio")
 
 plots(plot_choice,
@@ -120,17 +111,21 @@ plots(plot_choice,
       "Gene Expression log10(RPKM)",
       c("non-Essential","Esssential"))
 
+# subset for wilcoxon
 ess <- subset(prot, essential==1)
 non.ess <- subset(prot, essential==0)
 
+#wilcoxon signed rank test to determine significance
 wilcox.test(ess$gene.expression.RPKM, non.ess$gene.expression.RPKM)
-#the difference observed is very unlikely to occur by chance (Null hypothesis rejected) (W = 3039370, p-value < 2.2e-16)
-#essential genes are more highly expressed than non-essential genes in general
-######
-#Section 2: The relationship between mRNA Stability and RPKM in Essential and Non-Essential mRNAs
-######
+#the difference observed is very unlikely to occur by chance 
 
-#Plotting the relationship between mRNA stability and RPKM
+##(Null hypothesis rejected)##
+
+###essential genes are more highly expressed than non-essential genes in general###
+
+#####Section 2: The relationship between mRNA Stability and RPKM in Essential and Non-Essential mRNAs####
+
+###scatterplot: Plotting the relationship between mRNA stability and RPKM
 plot_sctr(prot,
           log10(prot$mRNA.stabilities),
           log10(prot$gene.expression.RPKM),
@@ -138,10 +133,15 @@ plot_sctr(prot,
           "gene.expression.RPKM",
           "mRNA.stabilities")
 
-#logs of both datasets were taken to visualise the trend easier
-#I use another wilcoxon signed rank test to determine significance
+#logs of both datasets were taken for visualisation
+
+#another wilcoxon signed rank test to determine significance
 wilcox.test(prot$mRNA.stabilities, prot$gene.expression.RPKM)
-#More stable mRNAs tend to be more highly expressed
+#the difference observed is very unlikely to occur by chance 
+
+##(Null hypothesis rejected)##
+
+###More stable mRNAs tend to be more highly expressed###
 
 #making a subset removing missing essentiality and mrna stability data
 prot2 <- gene_f %>%
@@ -159,20 +159,26 @@ plots(plot_choice,
       "mRNA.stabilities",
       c("non-Essential","Esssential") )
 
-#Third wilcoxon signed rank test to determine significance
+#Third wilcoxon signed rank test to determine significance,
 wilcox.test(ess$mRNA.stabilities, non.ess$mRNA.stabilities)
-#Null hypothesis rejected (W = 2372773, p-value = 3.728e-08)
-#mRNA of essential genes is more stable on average
+#the difference observed is very unlikely to occur by chance
 
-######
-#Section 3: The Relationship Between mRNA Stability and Localisation in Essential and Non-Essential mRNAs
-######
+##Null hypothesis rejected##
+
+##mRNA of essential genes is more stable on average##
+
+#####Section 3: The Relationship Between mRNA Stability and Localisation in Essential and Non-Essential mRNAs####
 
 nams<- names(gene_f[,1:8])
 
-locale <- gene_f %>% subset(!is.na(mRNA.stabilities)) %>% subset(!is.na(essential)) %>% pivot_longer(names_to = "localisation",
-                                                                                                     values_to = "present",
-                                                                                                     cols = -nams  ) %>% subset(present == 1)
+#making localisation data a single variable
+locale <- gene_f %>%
+  subset(!is.na(mRNA.stabilities)) %>% 
+  subset(!is.na(essential)) %>% 
+  pivot_longer(names_to = "localisation",
+               values_to = "present",
+               cols = -nams  ) %>% 
+  subset(present == 1)
 
 #I create summary data for the plot
 summary <- summarySE(locale, measurevar = "mRNA.stabilities", groupvars = c("localisation", "essential"))
@@ -181,16 +187,12 @@ summary
 mod <- aov(data = locale, mRNA.stabilities ~ localisation * essential)
 summary(mod)
 
-#Significant main effect of localisation on mRNA stability (ANOVA: F = 16.860; d.f. = 38; p< 2e-16)
+#Significant main effect of localisation on mRNA stability
 
-#Significant main effect of essentiality on mRNA stability (ANOVA: F = 9.218; d.f. = 1; p= 0.00241)
+#Significant main effect of essentiality on mRNA stability
 
-#There was an interaction  (ANOVA: F = 2.691; d.f. = 35; p= 2.97e-07)
+#There was an interaction
 
-#Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
-
-
-#####
 TukeyHSD(mod)
 
 #there are more than 5000 values so a shapiro test cannot be done with all of them
@@ -198,18 +200,19 @@ res <- mod$residuals
 
 #Testing the normal distribution assumption
 shapiro.test(res[1:5000])
-#Null hypothesis rejected (W = 0.81428, p-value < 2.2e-16)
-#this assumption is not met as the data is not normally distributed
+#Null hypothesis rejected
+
+##this assumption is not met as the data is not normally distributed##
 
 #Testing equal variances assumption
 #for the leveneTest function which can test for heterogeneity of variance
 leveneTest(mRNA.stabilities ~ localisation * essential, data = locale_mrna)
-#Null hypothesis rejected (p-value < 2.2e-16)
-#equal variances assumption not met
+#Null hypothesis rejected
 
-#####
-#names for barplot axis
-#####
+##equal variances assumption not met##
+
+
+#names for barplot axis#####
 nams2<- names(gene_f[,9:47])
 
 nams2
@@ -292,3 +295,6 @@ plot_bar(summary,
          nams2)
 
 
+
+
+writeLines(capture.output(sessionInfo()), "sessionInfo.txt")

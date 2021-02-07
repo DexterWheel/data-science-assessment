@@ -29,10 +29,11 @@ library(car)
 ```
 
 ```{r import}
+
 load(file = "data-processed/gene_f.Rda")
 ```
 
-```{r data transformation}
+```{r analysis subsets}
 prot <- gene_f %>%
   subset(protein_coding ==1) %>%
   subset(!is.na(essential)) %>%
